@@ -22,6 +22,7 @@ public class RequestFilter implements Filter {
         HttpSession session = ((HttpServletRequest)request).getSession();
         boolean online = false;
         Users user = (Users) session.getAttribute("USER_SESSION");
+        String text = "Hala Madrid";
 
         if(user!=null){
             Users currentUser = userRepository.getUser(user.getEmail());
