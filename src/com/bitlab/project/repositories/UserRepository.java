@@ -107,4 +107,29 @@ public class UserRepository {
         return rows>0;
     }
 
+    public Users getUserByToken(String token){
+        Users user = null;
+        try{
+
+            PreparedStatement statement = dbConnection.getConnection().prepareStatement("" +
+                    "SELECT * FROM users WHERE SHA1(CONCAT(password, email)) = ?");
+            statement.setString(1, token);
+
+            ResultSet resultSet = statement.executeQuery();
+            if(resultSet.next()){
+                user = new Users(
+                        resultSet.getLong("id"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password"),
+                        resultSet.getString("full_name")
+                );
+            }
+            statement.close();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return user;
+    }
+
 }

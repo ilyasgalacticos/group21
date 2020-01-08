@@ -5,9 +5,11 @@ import com.bitlab.project.entities.Blogs;
 import com.bitlab.project.entities.Users;
 import com.bitlab.project.repositories.BlogRepository;
 import com.bitlab.project.repositories.UserRepository;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,12 +48,12 @@ public class DispatcherServlet extends HttpServlet {
                     password!=null&&password.trim().length()>=6&&
                     fullName!=null&&!fullName.trim().equals("")
                 ){
-                    if(userRepository.addUser(new Users(null, email, password, fullName))){
+                    if(userRepository.addUser(new Users(null, email, DigestUtils.sha1Hex(password), fullName))){
                         redirect = "/?act=register&success";
                     }
                 }
 
-            }else if(act.equals("login")&&userSession==null){
+            }else if(act.equals("login")){
 
                 redirect = "/?act=login&error";
 
@@ -60,8 +62,16 @@ public class DispatcherServlet extends HttpServlet {
 
                 Users user = userRepository.getUser(email);
                 if(user!=null){
-                    if(user.getPassword().equals(password)){
+                    if(user.getPassword().equals(DigestUtils.sha1Hex(password))){
                         request.getSession().setAttribute("USER_SESSION", user);
+                        String remember = request.getParameter("remember");
+
+                        if(remember!=null&&remember.equals("yes")){
+                            Cookie cookie = new Cookie("rem_user_data", DigestUtils.sha1Hex(user.getPassword()+user.getEmail()));
+                            cookie.setMaxAge(30*24*3600);
+                            response.addCookie(cookie);
+                        }
+
                         redirect = "/?";
                     }
                 }
@@ -69,6 +79,16 @@ public class DispatcherServlet extends HttpServlet {
             }else if(act.equals("logout")&&userSession!=null){
 
                 request.getSession().removeAttribute("USER_SESSION");
+                Cookie cookies[] = request.getCookies();
+                if(cookies!=null){
+                    for(Cookie c : cookies){
+                        if(c.getName().equals("rem_user_data")){
+                            c.setMaxAge(0);
+                            response.addCookie(c);
+                        }
+                    }
+                }
+
                 redirect = "/?act=login";
 
             }else if(act.equals("addblog")&&userSession!=null){
@@ -90,8 +110,8 @@ public class DispatcherServlet extends HttpServlet {
 
                 Users user = userRepository.getUser(userSession.getEmail());
 
-                if(reNewPassword.equals(newPassword)&&user!=null&&user.getPassword().equals(oldPassword)){
-                    if(userRepository.updatePassword(new Users(userSession.getId(), null, newPassword, null))){
+                if(reNewPassword.equals(newPassword)&&user!=null&&user.getPassword().equals(DigestUtils.sha1Hex(oldPassword))){
+                    if(userRepository.updatePassword(new Users(userSession.getId(), null, DigestUtils.sha1Hex(newPassword), null))){
                         request.getSession().setAttribute("USER_SESSION", userRepository.getUser(userSession.getEmail()));
                         redirect = "/?act=profile&success";
                     }

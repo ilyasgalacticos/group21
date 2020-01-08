@@ -5,6 +5,7 @@ import com.bitlab.project.repositories.UserRepository;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
@@ -22,7 +23,6 @@ public class RequestFilter implements Filter {
         HttpSession session = ((HttpServletRequest)request).getSession();
         boolean online = false;
         Users user = (Users) session.getAttribute("USER_SESSION");
-        String text = "Hala Madrid";
 
         if(user!=null){
             Users currentUser = userRepository.getUser(user.getEmail());
@@ -32,6 +32,23 @@ public class RequestFilter implements Filter {
             }else{
                 session.removeAttribute("USER_SESSION");
             }
+        }else{
+
+            Cookie cookies[] = ((HttpServletRequest) request).getCookies();
+            if(cookies!=null){
+                for(Cookie c : cookies){
+                    if(c.getName().equals("rem_user_data")){
+                        String userToken = c.getValue();
+                        Users cookieUser = userRepository.getUserByToken(userToken);
+                        if(cookieUser!=null){
+                            session.setAttribute("USER_SESSION", cookieUser);
+                            online = true;
+                            request.setAttribute("CURRENT_USER", cookieUser);
+                        }
+                    }
+                }
+            }
+
         }
 
         request.setAttribute("USER_ONLINE", online);

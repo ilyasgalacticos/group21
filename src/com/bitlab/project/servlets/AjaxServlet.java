@@ -3,6 +3,7 @@ package com.bitlab.project.servlets;
 import com.bitlab.project.db.DBConnection;
 import com.bitlab.project.entities.Users;
 import com.bitlab.project.repositories.UserRepository;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -47,7 +48,7 @@ public class AjaxServlet extends HttpServlet {
             Users user = userRepository.getUser(email);
 
             if(user!=null){
-                if(pass!=null&&user.getPassword().trim().equals(pass)){
+                if(pass!=null&&user.getPassword().trim().equals(DigestUtils.sha1Hex(pass))){
                     out.print("{\"message\":\"User with email: \'"+email+"\' exists!\", \"status\":\"ok\"}");
                 }else{
                     out.print("{\"message\":\"Incorrect password for email: \'"+email+"\'!\", \"status\":\"error\"}");
@@ -62,7 +63,7 @@ public class AjaxServlet extends HttpServlet {
             if(currentUser!=null){
                 String password = request.getParameter("old_pass");
                 Users user = userRepository.getUser(currentUser.getEmail());
-                if(user.getPassword().equals(password)){
+                if(user.getPassword().equals(DigestUtils.sha1Hex(password))){
 
                     out.print("{\"message\":\"Correct password\", \"status\":\"ok\"}");
 

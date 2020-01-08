@@ -25,6 +25,10 @@
                             <label>Password</label>
                             <input type="password" class="form-control" id = "password" name="password">
                         </div>
+                        <div class="form-group">
+                            <label>Remember me</label>
+                            <input type="checkbox" name = "remember" value="yes">
+                        </div>
                         <button type="button" class="btn btn-primary" onclick="checkEmail()">Sign In</button>
                     </form>
                 </div>
